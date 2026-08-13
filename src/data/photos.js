@@ -98,13 +98,27 @@ export function responsive(src, sizes) {
   const [width, height] = intrinsic
   if (!entry.widths.length) return { src, width, height }
 
-  // The original is the widest entry; without it here, a large viewport would
-  // be served the biggest *variant* rather than the full-resolution file.
-  const candidates = [...entry.widths, [width, entry.full]]
-    .sort((a, b) => a[0] - b[0])
-    .map(([w, url]) => `${url} ${w}w`)
+  // Include the original only when no variant already covers its width —
+  // otherwise the srcset carries two entries with the same `w` descriptor and
+  // the browser is free to pick the larger file.
+  const covered = new Set(entry.widths.map(([w]) => w))
+  const all = [...entry.widths, ...(covered.has(width) ? [] : [[width, entry.full]])].sort(
+    (a, b) => a[0] - b[0],
+  )
 
-  return { src, srcSet: candidates.join(', '), sizes, width, height }
+  // `src` is the fallback for anything that ignores srcset. Point it at the
+  // largest *variant* rather than the untouched original: the variants are
+  // better compressed, so the original would otherwise be the one file that
+  // ships without ever being the right choice for anyone.
+  const fallback = all[all.length - 1][1]
+
+  return {
+    src: fallback,
+    srcSet: all.map(([w, url]) => `${url} ${w}w`).join(', '),
+    sizes,
+    width,
+    height,
+  }
 }
 
 /** Full-bleed hero image. */

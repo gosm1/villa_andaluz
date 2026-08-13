@@ -35,7 +35,10 @@ function preloadHero({ stem, fullWidth, sizes = '100vw', type = 'image/avif' }) 
         this.warn(`preload-hero: no asset matched "${stem}" — no preload emitted`)
         return
       }
-      candidates.push([fullWidth, fullHref])
+      // Same rule as responsive() in photos.js: the original only earns a slot
+      // if no variant already covers its width, or the srcset ends up with two
+      // entries at the same descriptor.
+      if (!candidates.some(([w]) => w === fullWidth)) candidates.push([fullWidth, fullHref])
       candidates.sort((a, b) => a[0] - b[0])
 
       // Must mirror the <img> exactly. Preloading a bare href instead would
