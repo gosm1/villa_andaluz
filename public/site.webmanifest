@@ -1,0 +1,13 @@
+{
+  "name": "Villa Andaluz",
+  "short_name": "Villa Andaluz",
+  "description": "Private villa with pool in Cabo Negro, Tétouan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efebe4",
+  "theme_color": "#efebe4",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

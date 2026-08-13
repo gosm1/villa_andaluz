@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Villa Andaluz · walk the house</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --scrim:22,19,15;
+  --ink:#16130F; --sand:#EFEBE4;
+  --sand-dim:rgba(239,235,228,.62); --sand-faint:rgba(239,235,228,.20);
+  --mark:#C8AD80; --rule:#A99781;
+  --pad:clamp(16px,2.6vw,34px);
+  --font-display:'Cormorant Garamond','Iowan Old Style','Times New Roman',serif;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+body.night{
+  --scrim:10,8,6;
+  --ink:#0F0D0A; --sand:#F5F2EC;
+  --sand-dim:rgba(245,242,236,.58); --sand-faint:rgba(245,242,236,.16);
+  --mark:#E2C79A; --rule:#C0A888;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--ink);color:var(--sand);overflow:hidden}
+body{font-family:var(--font-sans);-webkit-font-smoothing:antialiased;
+  transition:background .9s ease}
+
+#stage{position:fixed;inset:0;height:100svh;overflow:hidden;background:var(--ink)}
+#frame{position:absolute;inset:0;overflow:hidden;cursor:crosshair;touch-action:none;background:var(--ink)}
+#gl,#fallbackImg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#fallbackImg{object-fit:cover;display:none}
+#frame.is-fallback #gl{display:none}
+#frame.is-fallback #fallbackImg{display:block}
+
+/* ---------- markers ----------
+   .spot is a ZERO-SIZE anchor sitting exactly on the marker point.
+   The ring and the label are both positioned off that anchor, so the
+   width of the label can never drag the ring away from its door.     */
+#spots{position:absolute;inset:0;pointer-events:none;z-index:2}
+.spot{position:absolute;width:0;height:0;padding:0;border:0;background:none;
+  color:var(--sand);font-family:var(--font-sans);cursor:pointer;
+  opacity:0;transition:opacity .5s ease}
+.spot.ready{opacity:1}
+.spot.out{opacity:0 !important;pointer-events:none}
+
+.spot .ring{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;
+  transform:translate(-50%,-50%);pointer-events:auto;
+  border:1px solid rgba(255,246,232,.7);
+  background:radial-gradient(circle at 50% 50%, rgba(var(--scrim),.62), rgba(var(--scrim),.24) 72%);
+  box-shadow:0 0 0 1px rgba(0,0,0,.38), 0 6px 22px rgba(0,0,0,.5);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  transition:border-color .35s ease,transform .35s cubic-bezier(.2,.8,.3,1),background .35s ease}
+.spot .ring::before{content:"";position:absolute;inset:-1px;border-radius:50%;
+  border:1px solid var(--mark);opacity:.9;animation:ping 3.4s cubic-bezier(.2,.6,.3,1) infinite}
+.spot .ring::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;background:var(--mark);box-shadow:0 0 12px var(--mark),0 0 3px rgba(0,0,0,.6)}
+.spot.pending .ring{animation:pend .9s ease-in-out infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.85}70%{transform:scale(1.9);opacity:0}100%{opacity:0}}
+@keyframes pend{0%,100%{opacity:1}50%{opacity:.35}}
+
+.spot .tag{position:absolute;left:32px;top:var(--lane,0px);pointer-events:auto;
+  display:flex;flex-direction:column;gap:2px;text-align:left;white-space:nowrap;
+  transform:translateY(-50%) translateX(-8px);opacity:0;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.3,1);
+  text-shadow:0 1px 2px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.9),0 0 26px rgba(0,0,0,.7)}
+.spot.flip .tag{left:auto;right:32px;text-align:right;transform:translateY(-50%) translateX(8px)}
+.spot .tag em{font-style:normal;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--mark)}
+.spot .tag b{font-family:var(--font-sans);font-weight:500;font-size:15px}
+
+.spot:hover .ring,.spot:focus-visible .ring,.spot.open .ring{
+  transform:translate(-50%,-50%) scale(1.14);border-color:var(--mark);
+  background:radial-gradient(circle at 50% 50%, rgba(var(--scrim),.85), rgba(var(--scrim),.3) 72%)}
+.spot:hover .tag,.spot:focus-visible .tag,.spot.open .tag{opacity:1;transform:translateY(-50%) translateX(0)}
+.spot.flip:hover .tag,.spot.flip:focus-visible .tag,.spot.flip.open .tag{transform:translateY(-50%) translateX(0)}
+.spot:focus-visible{outline:none}
+.spot:focus-visible .ring{box-shadow:0 0 0 3px var(--mark),0 6px 22px rgba(0,0,0,.5)}
+
+/* one shared label pill on phones: never clipped, never colliding */
+#hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%) translateY(6px);z-index:5;
+  display:none;align-items:center;gap:10px;padding:9px 9px 9px 16px;border-radius:100px;
+  background:rgba(var(--scrim),.82);border:1px solid var(--sand-faint);color:var(--sand);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;
+  opacity:0;transition:opacity .25s ease,transform .25s cubic-bezier(.2,.8,.3,1);
+  font-family:var(--font-sans);max-width:calc(100% - 28px)}
+#hint.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#hint .txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+#hint em{font-style:normal;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mark)}
+#hint b{font-family:var(--font-sans);font-weight:500;font-size:14px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hint .go{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:var(--sand);color:var(--ink)}
+#hint .go svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8}
+
+/* ---------- chrome ---------- */
+.topbar{position:absolute;left:0;right:0;top:0;z-index:4;display:flex;justify-content:space-between;
+  align-items:flex-start;gap:14px;
+  padding:max(var(--pad),env(safe-area-inset-top)) max(var(--pad),env(safe-area-inset-right))
+          var(--pad) max(var(--pad),env(safe-area-inset-left))}
+.mark{position:relative;z-index:0;display:flex;flex-direction:column;gap:3px;
+  text-shadow:0 1px 2px rgba(0,0,0,.75),0 2px 16px rgba(0,0,0,.7)}
+.mark::before{content:"";position:absolute;left:-34px;right:-70px;top:-40px;bottom:-46px;z-index:-1;
+  background:radial-gradient(90% 130% at 0% 0%, rgba(var(--scrim),.9) 0%, rgba(var(--scrim),.6) 42%, rgba(var(--scrim),0) 78%)}
+.mark b{font-weight:600;font-size:clamp(13px,1.4vw,16px);letter-spacing:.18em;text-transform:uppercase}
+.mark span{font-family:var(--font-sans);font-size:10px;letter-spacing:.2em;color:var(--sand-dim);text-transform:uppercase}
+.tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+.daynight{display:inline-flex;align-items:center;background:rgba(var(--scrim),.5);
+  border:1px solid var(--sand-faint);border-radius:100px;padding:4px;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.daynight button{font-family:var(--font-sans);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sand-dim);background:none;border:0;padding:9px 15px;border-radius:100px;cursor:pointer;
+  min-height:36px;transition:background .35s ease,color .35s ease}
+.daynight button[aria-pressed="true"]{background:var(--sand);color:var(--ink)}
+.daynight button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+.book{font-family:var(--font-sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sand);background:rgba(var(--scrim),.5);border:1px solid var(--sand-faint);
+  padding:11px 18px;border-radius:100px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:background .3s,border-color .3s,color .3s}
+.book:hover{background:var(--sand);color:var(--ink);border-color:var(--sand)}
+
+.panel{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;flex-direction:column;gap:16px;
+  padding:var(--pad) max(var(--pad),env(safe-area-inset-right))
+          max(var(--pad),env(safe-area-inset-bottom)) max(var(--pad),env(safe-area-inset-left))}
+.readout{position:relative;z-index:0;max-width:min(560px,74vw);
+  text-shadow:0 1px 3px rgba(0,0,0,.8),0 3px 22px rgba(0,0,0,.75)}
+.readout::before{content:"";position:absolute;left:-40px;right:-90px;top:-46px;bottom:-56px;z-index:-1;
+  background:radial-gradient(100% 140% at 0% 100%, rgba(var(--scrim),.92) 0%, rgba(var(--scrim),.66) 40%, rgba(var(--scrim),0) 78%)}
+.eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.eyebrow i{display:block;width:26px;height:1px;background:var(--rule);transition:background .6s ease}
+.eyebrow span{font-family:var(--font-sans);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--rule);transition:color .6s ease}
+.readout h1{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,6vw,64px);line-height:1.04;letter-spacing:-.01em;
+  transition:opacity .4s ease,transform .4s cubic-bezier(.2,.8,.3,1)}
+.readout p{margin-top:10px;font-family:var(--font-sans);font-size:12px;line-height:1.6;
+  color:var(--sand-dim);max-width:46ch;transition:opacity .4s ease}
+.readout.swap h1{opacity:0;transform:translateY(14px)}
+.readout.swap p{opacity:0}
+
+.bottombar{display:flex;align-items:center;gap:10px}
+.back{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(var(--scrim),.5);border:1px solid var(--sand-faint);color:var(--sand);cursor:pointer;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;transform:scale(.8);pointer-events:none;transition:opacity .3s,transform .3s,background .3s}
+.back.on{opacity:1;transform:scale(1);pointer-events:auto}
+.back:hover{background:var(--sand);color:var(--ink)}
+.back svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6}
+
+.railwrap{flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%)}
+.railwrap::-webkit-scrollbar{display:none}
+.rail{display:inline-flex;align-items:center;gap:2px;background:rgba(var(--scrim),.5);
+  border:1px solid var(--sand-faint);border-radius:100px;padding:5px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.rail button{font-family:var(--font-sans);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--sand-dim);background:none;border:0;padding:11px 14px;border-radius:100px;cursor:pointer;
+  white-space:nowrap;min-height:36px;transition:color .3s,background .3s}
+.rail button:hover{color:var(--sand)}
+.rail button[aria-current="true"]{background:var(--sand);color:var(--ink)}
+.rail button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.rail .sep{flex:0 0 auto;width:1px;height:18px;background:var(--sand-faint);margin:0 7px}
+body.night .rail button:not([data-hasnight]){display:none}
+body.night .rail .sep{display:none}
+body:not(.night) .rail button[data-nightonly]{display:none}
+
+.scrim{position:absolute;inset:0;pointer-events:none;z-index:1;transition:background .9s ease;background:
+  linear-gradient(180deg,rgba(var(--scrim),.72) 0%,rgba(var(--scrim),.18) 22%,rgba(var(--scrim),0) 44%,rgba(var(--scrim),.32) 70%,rgba(var(--scrim),.88) 100%),
+  radial-gradient(120% 92% at 50% 48%,rgba(var(--scrim),0) 40%,rgba(var(--scrim),.58) 100%)}
+
+#calib{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;display:none;
+  font-family:var(--font-sans);font-size:12px;letter-spacing:.06em;color:var(--ink);
+  background:var(--mark);padding:9px 16px;border-radius:100px;white-space:nowrap;pointer-events:none}
+#calib.on{display:block}
+#frame.calib{cursor:cell}
+#frame.calib::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:linear-gradient(90deg,rgba(227,166,79,.3) 1px,transparent 1px) 0 0/10% 100%,
+             linear-gradient(180deg,rgba(227,166,79,.3) 1px,transparent 1px) 0 0/100% 10%}
+
+#loader{position:absolute;inset:0;background:var(--ink);display:grid;place-items:center;z-index:9;
+  transition:opacity .7s ease;font-family:var(--font-sans);font-size:10px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--sand-dim)}
+#loader.gone{opacity:0;pointer-events:none}
+#loader div{display:flex;flex-direction:column;align-items:center}
+#loader .bar{margin-top:14px;width:150px;height:1px;background:var(--sand-faint);position:relative;overflow:hidden}
+#loader .bar i{position:absolute;inset:0 100% 0 0;background:var(--mark);transition:right .4s ease}
+
+/* =========================================================
+   PORTRAIT PHONE
+   A 3:2 photo forced to cover a 0.46:1 screen shows barely a
+   third of its width. As a near-square band it shows two
+   thirds, and the space that frees up carries the type.
+   ========================================================= */
+@media (orientation:portrait) and (max-width:820px){
+  #stage{display:flex;flex-direction:column}
+  #frame{position:relative;inset:auto;flex:0 0 auto;width:100%}
+  .topbar{position:relative;inset:auto;order:-1;flex:0 0 auto;padding-bottom:10px}
+  .panel{position:relative;inset:auto;flex:1 1 auto;justify-content:flex-end;gap:14px;padding-top:18px}
+  .mark::before,.readout::before{display:none}
+  .mark,.readout{text-shadow:none}
+  .readout{max-width:none}
+  .readout h1{font-size:clamp(30px,8.6vw,42px)}
+  .readout p{font-size:11.5px;max-width:38ch}
+  .scrim{background:
+    linear-gradient(180deg,rgba(var(--scrim),.34) 0%,rgba(var(--scrim),0) 26%,rgba(var(--scrim),0) 68%,rgba(var(--scrim),.42) 100%),
+    radial-gradient(130% 100% at 50% 50%,rgba(var(--scrim),0) 52%,rgba(var(--scrim),.42) 100%)}
+  /* the Enquire CTA folds away on a phone, but never the way back out */
+  .book{display:none}
+  .book--exit{display:inline-flex;padding:9px 14px;font-size:10px;min-height:36px;align-items:center}
+  .mark span{display:none}
+  .spot .tag{display:none}          /* replaced by the shared #hint pill */
+  .spot .ring{width:40px;height:40px}
+  #hint{display:flex}
+}
+@media (orientation:portrait) and (max-width:820px) and (max-height:680px){
+  .readout p{display:none}
+}
+@media (prefers-reduced-motion:reduce){.spot .ring::before{animation:none;opacity:.35}*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="frame">
+    <canvas id="gl"></canvas>
+    <img id="fallbackImg" alt="">
+    <div class="scrim"></div>
+    <div id="spots"></div>
+    <div id="calib"></div>
+    <button id="hint" type="button">
+      <span class="txt"><em></em><b></b></span>
+      <span class="go"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+  </div>
+
+  <header class="topbar">
+    <div class="mark"><b>Villa Andaluz</b><span>Cabo Negro &middot; 13 guests &middot; 5 bedrooms</span></div>
+    <div class="tools">
+      <div class="daynight" role="group" aria-label="Time of day">
+        <button type="button" id="dayBtn" aria-pressed="true">Day</button>
+        <button type="button" id="nightBtn" aria-pressed="false">Night</button>
+      </div>
+      <button class="book" type="button" id="bookBtn">Enquire</button>
+      <button class="book book--exit" type="button" id="exitBtn">Close tour</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="readout" id="readout">
+      <div class="eyebrow"><i></i><span id="roomKind">Outside</span></div>
+      <h1 id="roomName">The front garden</h1>
+      <p id="roomNote">Drag to look around. Tap a marker to walk into the next space.</p>
+    </div>
+    <div class="bottombar">
+      <button class="back" id="backBtn" type="button" aria-label="Go back">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="railwrap"><nav class="rail" id="rail" aria-label="Rooms"></nav></div>
+    </div>
+  </div>
+
+  <div id="loader"><div>Loading the house<div class="bar"><i id="loadBar"></i></div></div></div>
+</div>
+
+<script>
+/* ================================================================
+   THE HOUSE.  at:[x,y] is image space, 0,0 = BOTTOM-LEFT.
+   mAnchor is the horizontal centre of the portrait crop, picked so
+   every marker in that room stays inside the visible band.
+   ================================================================ */
+const NODES = {
+  arrival:{ day:"arrival.webp", kind:"Outside", name:"The front garden",
+    note:"You arrive here. Roses, clipped lawn, and two ways in: the arch on the left, or up to the terrace.",
+    depth:"open", focal:[.45,.55], strength:.050, mAnchor:[.345,.5],
+    spots:[
+      {to:"passage", at:[.182,.444], label:"Side passage",  sub:"Through the arch"},
+      {to:"hidden",  at:[.508,.451], label:"Hidden lounge", sub:"Under the arcade", flip:true}
+    ]},
+
+  passage:{ day:"passage.webp", kind:"Outside", name:"The side passage",
+    note:"The shortcut along the flank of the house, front garden through to the pool.",
+    depth:"room", focal:[.50,.42], strength:.058, mAnchor:[.50,.5],
+    spots:[{to:"pool", at:[.504,.389], label:"Pool garden", sub:"Straight ahead"}]},
+
+  pool:{ day:"pool.webp", night:"pool_n.webp", kind:"Outside", name:"The pool garden",
+    note:"The whole back of the house opens onto the water. Three ways in, plus the summer kitchen.",
+    nightName:"The pool after dark", nightKind:"After dark",
+    nightNote:"Blue hour. Uplights in the palms, the water lit from below, and every door in the house glowing.",
+    depth:"open", focal:[.42,.55], strength:.052, mAnchor:[.558,.5],
+    nightFocal:[.40,.50], nightStrength:.055, mAnchorN:[.335,.5],
+    spots:[
+      {to:"lounge",  at:[.418,.488], label:"Main lounge",    sub:"Under the pergola", lane:-34},
+      {to:"garden",  at:[.480,.488], label:"Garden room",    sub:"Glazed doors",      lane: 34},
+      {to:"passage", at:[.586,.484], label:"Side passage",   sub:"Through the arch",  lane:-34},
+      {to:"kitchen", at:[.698,.470], label:"Summer kitchen", sub:"Under the arches",  lane: 34, flip:true}
+    ],
+    nightSpots:[
+      {to:"lounge",  at:[.284,.506], label:"Main lounge", sub:"Lit doors",             lane:-34},
+      {to:"terrace", at:[.380,.455], label:"The pergola", sub:"Dinner on the terrace", lane: 34}
+    ]},
+
+  terrace:{ night:"terrace_n.webp", nightOnly:true, kind:"After dark", name:"The pergola",
+    note:"Dinner for ten under the louvres, with the house glowing through the glass behind.",
+    depth:"room", focal:[.58,.55], strength:.055, mAnchor:[.455,.5],
+    nightSpots:[
+      {to:"pool",   at:[.176,.297], label:"Pool garden",   sub:"Back to the water"},
+      {to:"lounge", at:[.520,.564], label:"Main lounge",   sub:"Left doors",  lane:-34},
+      {to:"hidden", at:[.734,.561], label:"Hidden lounge", sub:"Right doors", lane: 34, flip:true}
+    ]},
+
+  kitchen:{ day:"kitchen.webp", kind:"Outside", name:"The summer kitchen",
+    note:"Open-air hob, fridge and prep counter under the arches, laundry tucked in behind.",
+    depth:"open", focal:[.30,.50], strength:.048, mAnchor:[.660,.5],
+    spots:[{to:"pool", at:[.760,.430], label:"Pool garden", sub:"Back across the lawn", flip:true}]},
+
+  garden:{ day:"garden.webp", kind:"Inside", name:"The garden room",
+    note:"Glass on two sides, so the pool stays in the corner of your eye all day.",
+    depth:"room", focal:[.355,.585], strength:.055, mAnchor:[.594,.5],
+    spots:[
+      {to:"pool",   at:[.354,.594], label:"Pool garden", sub:"Back outside"},
+      {to:"lounge", at:[.833,.479], label:"Main lounge", sub:"Past the fireplace", flip:true}
+    ]},
+
+  lounge:{ day:"lounge.webp", night:"lounge_n.webp", kind:"Inside", name:"The main lounge",
+    note:"One open floor with dining for eight, two seating areas, and the stair up to the bedrooms.",
+    nightKind:"After dark",
+    nightNote:"Cove lighting only. The glass turns to mirror and the room closes in around the sofas.",
+    depth:"room", focal:[.48,.60], strength:.050, mAnchor:[.469,.5],
+    nightFocal:[.55,.58], nightStrength:.048, mAnchorN:[.559,.5],
+    spots:[
+      {to:"hidden", at:[.156,.504], label:"Hidden lounge",  sub:"Down the steps"},
+      {to:"hearth", at:[.470,.585], label:"Hearth &amp; WC",   sub:"Turn to the fireplace"},
+      {to:"pool",   at:[.781,.589], label:"Pool terrace",   sub:"Sliding doors", flip:true}
+    ],
+    nightSpots:[
+      {to:"hidden",  at:[.450,.513], label:"Hidden lounge", sub:"Past the stair"},
+      {to:"terrace", at:[.667,.575], label:"The pergola",   sub:"Out to dinner", flip:true}
+    ]},
+
+  hearth:{ day:"hearth.webp", kind:"Inside", name:"The hearth",
+    note:"The fireplace end of the lounge, with the guest shower room off to the right.",
+    depth:"room", focal:[.32,.58], strength:.052, mAnchor:[.468,.5],
+    spots:[
+      {to:"pool",   at:[.296,.606], label:"Pool terrace", sub:"Sliding doors"},
+      {to:"lounge", at:[.640,.560], label:"Main lounge",  sub:"Back to the table", flip:true}
+    ]},
+
+  hidden:{ day:"hidden.webp", night:"hidden_n.webp", kind:"Inside", name:"The hidden lounge",
+    note:"Tucked into the front of the house. The quiet room, opening onto its own walled courtyard.",
+    nightKind:"After dark",
+    nightNote:"The last room anyone finds, and the one everyone ends up in.",
+    depth:"room", focal:[.35,.60], strength:.055, mAnchor:[.575,.5],
+    nightFocal:[.40,.62], nightStrength:.052, mAnchorN:[.462,.5],
+    spots:[
+      {to:"passage", at:[.350,.612], label:"Side courtyard", sub:"Sliding doors"},
+      {to:"lounge",  at:[.800,.474], label:"Main lounge",    sub:"Up the steps", flip:true}
+    ],
+    nightSpots:[
+      {to:"terrace", at:[.167,.656], label:"The pergola",  sub:"Out through the glass"},
+      {to:"lounge",  at:[.757,.615], label:"Main lounge",  sub:"Up the steps", flip:true}
+    ]}
+};
+const RAIL=["arrival","passage","pool","terrace","kitchen","|","lounge","garden","hearth","hidden"];
+const START="arrival", NIGHT_HOME="pool";
+
+/* phones get the 1000px set: half the bytes, a quarter of the GPU memory */
+const SMALL=matchMedia("(max-width:820px)").matches;
+const BASE=SMALL?"images/mobile/":"images/";
+
+/* ---------------- shaders ---------------- */
+const VERT=`attribute vec2 aPos;varying vec2 vUv;
+void main(){vUv=aPos*0.5+0.5;gl_Position=vec4(aPos,0.0,1.0);}`;
+const FRAG=`
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTexA,uTexB;
+uniform vec2 uCoverA,uCoverB,uFocalA,uFocalB,uPivotA,uPivotB,uAnchA,uAnchB;
+uniform float uZoomA,uZoomB,uStrA,uStrB;
+uniform int uModeA,uModeB;
+uniform vec2 uMouse;
+uniform float uMix;
+float nearness(vec2 uv,int mode,vec2 focal){
+  if(mode==0){ return 1.0-smoothstep(0.02,0.94,uv.y); }
+  vec2 d=(uv-focal)*vec2(1.0,0.8);
+  return smoothstep(0.06,0.60,length(d));
+}
+vec4 layer(sampler2D tex,vec2 cover,vec2 anchor,float zoom,vec2 pivot,int mode,vec2 focal,float str){
+  vec2 base=(vUv-0.5)/cover+anchor;
+  vec2 uv=(base-pivot)/zoom+pivot;
+  float n=nearness(uv,mode,focal);
+  vec2 off=uMouse*(n-0.35)*str;
+  return texture2D(tex,clamp(uv+off,0.0018,0.9982));
+}
+void main(){
+  vec4 a=layer(uTexA,uCoverA,uAnchA,uZoomA,uPivotA,uModeA,uFocalA,uStrA);
+  vec4 b=layer(uTexB,uCoverB,uAnchB,uZoomB,uPivotB,uModeB,uFocalB,uStrB);
+  vec3 c=mix(a.rgb,b.rgb,uMix);
+  c=mix(c,c*vec3(0.86,0.93,1.04),0.10);
+  gl_FragColor=vec4(c,1.0);
+}`;
+
+/* ---------------- refs ---------------- */
+const stage=document.getElementById("stage"),frame=document.getElementById("frame"),cv=document.getElementById("gl");
+const spotsEl=document.getElementById("spots"),railEl=document.getElementById("rail");
+const roomKind=document.getElementById("roomKind"),roomName=document.getElementById("roomName");
+const roomNote=document.getElementById("roomNote"),readout=document.getElementById("readout");
+const loader=document.getElementById("loader"),loadBar=document.getElementById("loadBar");
+const backBtn=document.getElementById("backBtn"),dayBtn=document.getElementById("dayBtn"),nightBtn=document.getElementById("nightBtn");
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TOUCH=matchMedia("(hover:none)").matches;
+
+let gl=null,prog=null,U={},W=0,H=0,DPR=1,portrait=false;
+let imgs={},texes={},pendingLoads={};
+let night=false,cur=START;
+let fromVar=null,toVar=null,transT=1,transDur=1080,transStart=0,transPivot=[.5,.5],transKind="walk";
+let historyStack=[],mouse=[0,0],target=[0,0],dragging=false,dragLast=null,dragOffset=[0,0],started=0;
+
+const SRC={};
+Object.keys(NODES).forEach(k=>{
+  if(NODES[k].day)   SRC[k+":day"]=BASE+NODES[k].day;
+  if(NODES[k].night) SRC[k+":night"]=BASE+NODES[k].night;
+});
+
+/* ---------------- progressive loading ---------------- */
+function load(ik){
+  if(imgs[ik]) return Promise.resolve(imgs[ik]);
+  if(pendingLoads[ik]) return pendingLoads[ik];
+  pendingLoads[ik]=new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>{ imgs[ik]=im; if(gl&&prog) texes[ik]=makeTex(im); res(im); };
+    im.onerror=()=>res(null);
+    im.src=SRC[ik];
+  });
+  return pendingLoads[ik];
+}
+function loadRest(){
+  const queue=Object.keys(SRC).filter(k=>!imgs[k]);
+  const total=queue.length; let done=0;
+  (function step(){
+    const k=queue.shift();
+    if(!k){ loadBar.style.right="0%"; return; }
+    load(k).then(()=>{ done++; loadBar.style.right=(100-(done/total*100))+"%"; step(); });
+  })();
+}
+
+/* ---------------- variants ---------------- */
+function variantOf(key){ return (night&&NODES[key].night)?key+":night":key+":day"; }
+function nodeOf(v){ return v.split(":")[0]; }
+function availableIn(key,isNight){ return isNight?!!NODES[key].night:!!NODES[key].day; }
+function spotsFor(key){
+  const n=NODES[key];
+  return ((night&&n.nightSpots)?n.nightSpots:(n.spots||[])).filter(s=>availableIn(s.to,night));
+}
+function fieldFor(key,base,nightKey){
+  const n=NODES[key];
+  return (night&&n[nightKey]!==undefined)?n[nightKey]:n[base];
+}
+
+/* ---------------- gl ---------------- */
+function compile(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.warn(gl.getShaderInfoLog(s));return null;}return s;}
+function setupGL(){
+  const vs=compile(gl.VERTEX_SHADER,VERT),fs=compile(gl.FRAGMENT_SHADER,FRAG);
+  if(!vs||!fs){gl=null;frame.classList.add("is-fallback");return;}
+  prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){gl=null;frame.classList.add("is-fallback");return;}
+  gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,"aPos");gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  ["uTexA","uTexB","uCoverA","uCoverB","uFocalA","uFocalB","uPivotA","uPivotB","uAnchA","uAnchB",
+   "uZoomA","uZoomB","uStrA","uStrB","uModeA","uModeB","uMouse","uMix"].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+  gl.uniform1i(U.uTexA,0);gl.uniform1i(U.uTexB,1);
+}
+function makeTex(img){
+  const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,img);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  return t;
+}
+
+/* ---------------- layout ---------------- */
+function resize(){
+  portrait=matchMedia("(orientation:portrait) and (max-width:820px)").matches;
+  if(portrait){
+    const w=stage.clientWidth, avail=stage.clientHeight;
+    frame.style.height=Math.round(Math.min(w, avail*0.58))+"px";
+  }else{
+    frame.style.height="";
+  }
+  DPR=Math.min(devicePixelRatio||1,2);
+  W=frame.clientWidth;H=frame.clientHeight;
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  cv.style.width=W+"px";cv.style.height=H+"px";
+  if(gl) gl.viewport(0,0,cv.width,cv.height);
+}
+function coverOf(ik){
+  const im=imgs[ik];if(!im||!W||!H)return[1,1];
+  const r=(W/H)/(im.naturalWidth/im.naturalHeight);
+  return r>1?[1,r]:[1/r,1];
+}
+/* crop centre, clamped so we never sample past the edge of the photo */
+function anchorOf(v,cover){
+  const k=nodeOf(v),n=NODES[k],isN=v.endsWith(":night");
+  const a=portrait?((isN&&n.mAnchorN)||n.mAnchor||[.5,.5]):(n.anchor||[.5,.5]);
+  const hx=.5/cover[0],hy=.5/cover[1];
+  return [Math.min(1-hx,Math.max(hx,a[0])),Math.min(1-hy,Math.max(hy,a[1]))];
+}
+
+/* ---------------- pointer ---------------- */
+frame.addEventListener("pointermove",e=>{
+  if(dragging){
+    const dx=(e.clientX-dragLast[0])/W,dy=(e.clientY-dragLast[1])/H;
+    dragOffset[0]=Math.max(-1,Math.min(1,dragOffset[0]-dx*2.4));
+    dragOffset[1]=Math.max(-1,Math.min(1,dragOffset[1]-dy*2.4));
+    dragLast=[e.clientX,e.clientY];
+  }else if(!TOUCH){
+    const r=frame.getBoundingClientRect();
+    target=[((e.clientX-r.left)/r.width-.5)*2,((e.clientY-r.top)/r.height-.5)*2];
+  }
+});
+frame.addEventListener("pointerdown",e=>{ if(e.target.closest("button"))return;
+  dragging=true;dragLast=[e.clientX,e.clientY];try{frame.setPointerCapture(e.pointerId);}catch(_){} });
+addEventListener("pointerup",()=>dragging=false);
+frame.addEventListener("pointerleave",()=>{if(!dragging&&!TOUCH)target=[0,0];});
+const hintEl=document.getElementById("hint");
+let hintTarget=null;
+function closeLabels(){
+  [...spotsEl.children].forEach(x=>x.classList.remove("open"));
+  hintEl.classList.remove("on"); hintTarget=null;
+}
+function openLabel(b,s){
+  closeLabels(); b.classList.add("open");
+  hintEl.querySelector("em").textContent=s.sub;
+  hintEl.querySelector("b").textContent=s.label.replace(/&amp;/g,"&");
+  hintTarget={to:s.to,at:s.at.slice(),btn:b};
+  hintEl.classList.add("on");
+}
+hintEl.addEventListener("click",ev=>{
+  ev.stopPropagation();
+  if(!hintTarget)return;
+  const t=hintTarget; closeLabels(); go(t.to,t.at,true,t.btn);
+});
+
+/* ---------------- navigation ---------------- */
+function applyNode(key){
+  readout.classList.add("swap");
+  setTimeout(()=>{
+    roomKind.textContent=fieldFor(key,"kind","nightKind");
+    roomName.textContent=fieldFor(key,"name","nightName");
+    roomNote.textContent=fieldFor(key,"note","nightNote");
+    readout.classList.remove("swap");
+  },260);
+  [...railEl.querySelectorAll("button")].forEach(b=>b.setAttribute("aria-current",String(b.dataset.k===key)));
+  backBtn.classList.toggle("on",historyStack.length>0);
+}
+function transition(nextKey,pivot,kind,record){
+  fromVar=toVar; toVar=variantOf(nextKey);
+  transPivot=pivot||[.5,.5]; transKind=kind||"walk";
+  transStart=performance.now(); transT=0;
+  if(record!==false && nextKey!==cur) historyStack.push(cur);
+  cur=nextKey;
+  closeLabels();
+  [...spotsEl.children].forEach(b=>b.classList.add("out"));
+  applyNode(nextKey);
+  setTimeout(()=>buildSpots(0),transDur*0.55);
+}
+function go(key,pivot,record,btn){
+  if(key===cur)return;
+  const v=variantOf(key);
+  if(imgs[v]) return transition(key,pivot,"walk",record);
+  if(btn) btn.classList.add("pending");
+  load(v).then(()=>{ if(btn) btn.classList.remove("pending"); transition(key,pivot,"walk",record); });
+}
+function buildRail(){
+  RAIL.forEach(k=>{
+    if(k==="|"){const s=document.createElement("span");s.className="sep";railEl.appendChild(s);return;}
+    const n=NODES[k],b=document.createElement("button");
+    b.type="button";b.dataset.k=k;
+    if(n.night) b.dataset.hasnight="1";
+    if(n.nightOnly) b.dataset.nightonly="1";
+    b.textContent=n.name.replace(/^The /,"");
+    b.addEventListener("click",()=>go(k,[.5,.5],true,b));
+    railEl.appendChild(b);
+  });
+}
+function buildSpots(delay){
+  spotsEl.innerHTML="";
+  spotsFor(cur).forEach(s=>{
+    const b=document.createElement("button");b.type="button";
+    b.className="spot"+(s.flip?" flip":"");
+    b.dataset.x=s.at[0];b.dataset.y=s.at[1];
+    if(s.lane) b.style.setProperty("--lane",s.lane+"px");
+    b.setAttribute("aria-label","Go to "+s.label.replace(/&amp;/g,"&"));
+    b.innerHTML='<span class="ring"></span><span class="tag"><em>'+s.sub+'</em><b>'+s.label+'</b></span>';
+    b.addEventListener("pointerenter",()=>{ if(!TOUCH&&portrait) openLabel(b,s); });
+    b.addEventListener("click",ev=>{
+      ev.stopPropagation();
+      /* on touch, the first tap names the room and the second walks into it */
+      if((TOUCH||portrait)&&!b.classList.contains("open")){ openLabel(b,s); return; }
+      go(s.to,s.at.slice(),true,b);
+    });
+    spotsEl.appendChild(b);
+    requestAnimationFrame(()=>setTimeout(()=>b.classList.add("ready"),delay));
+  });
+}
+backBtn.addEventListener("click",()=>{ if(!historyStack.length)return;
+  const back=historyStack.pop();
+  if(!availableIn(back,night))return;
+  go(back,[.5,.5],false); });
+
+/* ---------------- day / night ---------------- */
+function setNight(on){
+  if(on===night)return;
+  const landing=availableIn(cur,on)?cur:NIGHT_HOME;
+  const v=(on&&NODES[landing].night)?landing+":night":landing+":day";
+  load(v).then(()=>{
+    night=on;
+    document.body.classList.toggle("night",night);
+    dayBtn.setAttribute("aria-pressed",String(!night));
+    nightBtn.setAttribute("aria-pressed",String(night));
+    historyStack=historyStack.filter(k=>availableIn(k,night));
+    fromVar=toVar; toVar=v; cur=landing;
+    transPivot=[.5,.5];transKind="fade";transStart=performance.now();transT=0;
+    [...spotsEl.children].forEach(b=>b.classList.add("out"));
+    applyNode(landing);
+    setTimeout(()=>buildSpots(0),transDur*0.55);
+  });
+}
+dayBtn.addEventListener("click",()=>setNight(false));
+nightBtn.addEventListener("click",()=>setNight(true));
+
+/* ---------------- projection ---------------- */
+function smoothstep(a,b,x){const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
+function nearnessJS(uv,mode,focal){
+  if(mode===0)return 1-smoothstep(.02,.94,uv[1]);
+  return smoothstep(.06,.60,Math.hypot(uv[0]-focal[0],(uv[1]-focal[1])*.8));
+}
+function project(uv,L){
+  const n=nearnessJS(uv,L.mode,L.focal);
+  const ox=mouse[0]*(n-.35)*L.str, oy=-mouse[1]*(n-.35)*L.str;
+  const lu=[uv[0]-ox,uv[1]-oy];
+  const bx=(lu[0]-L.pivot[0])*L.zoom+L.pivot[0], by=(lu[1]-L.pivot[1])*L.zoom+L.pivot[1];
+  return [((bx-L.anch[0])*L.cover[0]+.5)*W, (1-((by-L.anch[1])*L.cover[1]+.5))*H];
+}
+function unproject(sx,sy,L){
+  const vx=sx/W, vy=1-sy/H;
+  const bx=(vx-.5)/L.cover[0]+L.anch[0], by=(vy-.5)/L.cover[1]+L.anch[1];
+  const lu=[(bx-L.pivot[0])/L.zoom+L.pivot[0],(by-L.pivot[1])/L.zoom+L.pivot[1]];
+  let u=lu[0],v=lu[1];
+  for(let i=0;i<2;i++){
+    const n=nearnessJS([u,v],L.mode,L.focal);
+    u=lu[0]+mouse[0]*(n-.35)*L.str; v=lu[1]-mouse[1]*(n-.35)*L.str;
+  }
+  return [u,v];
+}
+
+/* ---------------- calibration (press C) ---------------- */
+let calib=false,LNow=null;
+const calibEl=document.getElementById("calib");
+function toggleCalib(){
+  calib=!calib;calibEl.classList.toggle("on",calib);frame.classList.toggle("calib",calib);
+  calibEl.textContent=calib?"Calibrating "+cur+", click to copy":"";
+}
+frame.addEventListener("pointermove",e=>{
+  if(!calib||!LNow)return;
+  const r=frame.getBoundingClientRect();
+  const p=unproject(e.clientX-r.left,e.clientY-r.top,LNow);
+  calibEl.textContent=cur+(night?" (night)":"")+"  at:["+p[0].toFixed(3)+", "+p[1].toFixed(3)+"]";
+});
+frame.addEventListener("click",e=>{
+  if(e.target.closest(".spot"))return;
+  if(!calib){ closeLabels(); return; }
+  if(!LNow)return;
+  const r=frame.getBoundingClientRect();
+  const p=unproject(e.clientX-r.left,e.clientY-r.top,LNow);
+  const txt="at:["+p[0].toFixed(3)+", "+p[1].toFixed(3)+"]";
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{});
+  calibEl.textContent="copied  "+txt;
+});
+
+/* ---------------- frame loop ---------------- */
+const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function layerParams(v,zoom,pivot){
+  const k=nodeOf(v),n=NODES[k],isN=v.endsWith(":night");
+  const cover=coverOf(v);
+  return {cover,anch:anchorOf(v,cover),zoom,pivot,
+    mode:((isN&&n.nightDepth)||n.depth)==="open"?0:1,
+    focal:(isN&&n.nightFocal)||n.focal,
+    str:(isN&&n.nightStrength)||n.strength, tex:v};
+}
+function loop(now){
+  requestAnimationFrame(loop);
+  const dur=transKind==="fade"?1250:transDur;
+  if(transT<1) transT=Math.min(1,(now-transStart)/(REDUCED?260:dur));
+  const e=easeIO(transT);
+
+  const t=(now-started)/1000;
+  const drift=(REDUCED||calib)?[0,0]:[Math.sin(t*.21)*.30+Math.sin(t*.07)*.16, Math.cos(t*.17)*.20+Math.sin(t*.05)*.10];
+  const want=calib?[0,0]:[Math.max(-1.4,Math.min(1.4,target[0]+drift[0]+dragOffset[0]*1.5)),
+              Math.max(-1.4,Math.min(1.4,target[1]+drift[1]+dragOffset[1]*1.5))];
+  mouse[0]+=(want[0]-mouse[0])*.055; mouse[1]+=(want[1]-mouse[1])*.055;
+
+  const walking=transKind==="walk";
+  const LOut=layerParams(fromVar, walking?1+e*0.55:1+e*0.05, walking?transPivot:[.5,.5]);
+  const LIn =layerParams(toVar,   walking?1+(1-e)*0.26:1+(1-e)*0.05, [.5,.5]);
+
+  if(gl&&prog&&texes[LIn.tex]){
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texes[LOut.tex]||texes[LIn.tex]);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,texes[LIn.tex]);
+    gl.uniform2fv(U.uCoverA,LOut.cover);gl.uniform2fv(U.uCoverB,LIn.cover);
+    gl.uniform2fv(U.uAnchA,LOut.anch);  gl.uniform2fv(U.uAnchB,LIn.anch);
+    gl.uniform2fv(U.uFocalA,LOut.focal);gl.uniform2fv(U.uFocalB,LIn.focal);
+    gl.uniform2fv(U.uPivotA,LOut.pivot);gl.uniform2fv(U.uPivotB,LIn.pivot);
+    gl.uniform1f(U.uZoomA,LOut.zoom);gl.uniform1f(U.uZoomB,LIn.zoom);
+    gl.uniform1f(U.uStrA,LOut.str);gl.uniform1f(U.uStrB,LIn.str);
+    gl.uniform1i(U.uModeA,LOut.mode);gl.uniform1i(U.uModeB,LIn.mode);
+    gl.uniform2fv(U.uMouse,mouse);
+    gl.uniform1f(U.uMix, transT>=1?1:smoothstep(0,1,Math.min(1,e*(walking?1.35:1.0))));
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }else if(!gl){
+    const img=document.getElementById("fallbackImg");
+    if(img.dataset.k!==LIn.tex){img.src=SRC[LIn.tex];img.dataset.k=LIn.tex;}
+    img.style.transform="scale(1.08) translate("+(-mouse[0]*1.4)+"%,"+(-mouse[1]*1.4)+"%)";
+  }
+  LNow=LIn;
+
+  [...spotsEl.children].forEach(b=>{
+    const p=project([parseFloat(b.dataset.x),parseFloat(b.dataset.y)],LIn);
+    b.style.left=p[0]+"px";b.style.top=p[1]+"px";
+  });
+}
+
+/* ---------------- talking to the host page ----------------
+   The tour runs inside an <iframe> on /tour, so both buttons post up to the
+   React app rather than navigating themselves. Opened directly as a file
+   (no parent) they fall back to links, so this page still works standalone. */
+const framed = window.parent !== window;
+function tell(type){
+  if(framed){ parent.postMessage({source:"villa-tour",type},"*"); return true; }
+  return false;
+}
+document.getElementById("bookBtn").addEventListener("click",()=>{
+  if(!tell("enquire")) location.href="/#contact";
+});
+document.getElementById("exitBtn").addEventListener("click",()=>{
+  if(!tell("exit")) location.href="/";
+});
+addEventListener("keydown",ev=>{
+  if(ev.key==="c"||ev.key==="C"){toggleCalib();return;}
+  if(ev.key==="n"||ev.key==="N"){setNight(!night);return;}
+  if(ev.key==="Escape"&&historyStack.length){backBtn.click();return;}
+  if(ev.key!=="ArrowRight"&&ev.key!=="ArrowLeft")return;
+  const list=RAIL.filter(k=>k!=="|"&&availableIn(k,night));
+  const i=list.indexOf(cur);
+  go(list[(i+(ev.key==="ArrowRight"?1:list.length-1))%list.length],[.5,.5]);
+});
+
+/* ---------------- boot ---------------- */
+buildRail();
+try{ gl=cv.getContext("webgl",{antialias:false,alpha:false,powerPreference:"high-performance"})
+      ||cv.getContext("experimental-webgl"); }catch(err){ gl=null; }
+if(gl) setupGL(); else frame.classList.add("is-fallback");
+resize();
+addEventListener("resize",resize);
+addEventListener("orientationchange",()=>setTimeout(resize,150));
+fromVar=toVar=variantOf(START);
+load(toVar).then(()=>{               /* start after ONE photo, not twelve */
+  applyNode(START); buildSpots(0);
+  started=performance.now(); requestAnimationFrame(loop);
+  loader.classList.add("gone");
+  loadRest();
+});
+</script>
+</body>
+</html>

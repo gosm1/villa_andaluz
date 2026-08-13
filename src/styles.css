@@ -1,0 +1,1601 @@
+/* ============================================================
+   Villa Andaluz · design tokens
+   Palette follows the warm cream / taupe / near-black reference:
+   cream page, sand panels, one mocha band, black pill buttons.
+   ============================================================ */
+
+:root {
+  --cream: #efebe4;
+  --cream-soft: #f5f2ec;
+  --sand: #e4ddd1;
+  --sand-deep: #d8cfc0;
+  --mocha: #8a7c6c;
+  --mocha-deep: #6f6354;
+  --ink: #16130f;
+  --ink-soft: #3a352d;
+  --muted: #7c7368;
+  --line: rgba(22, 19, 15, 0.13);
+  --line-strong: rgba(22, 19, 15, 0.24);
+  --white: #fffdfa;
+  --olive: #8a8560;
+  /* Deep enough to clear 4.5:1 on the cream form panel. */
+  --error: #a3341f;
+  --error-tint: #fdf4f1;
+
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --shell: 1240px;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --radius: 18px;
+  --radius-lg: 28px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- inertial scrolling (Lenis) ----------
+   Written out rather than importing lenis.css, whose default
+   `.lenis-smooth iframe { pointer-events: none }` would make the location map
+   dead to clicks. Iframes here stay interactive; the map simply keeps the
+   wheel while the pointer is over it. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+/* Native smooth scrolling would animate against Lenis, so hand it over. */
+html.lenis {
+  scroll-behavior: auto;
+}
+html.lenis.lenis-stopped {
+  overflow: clip;
+}
+html.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.icon {
+  flex: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ink);
+  color: var(--white);
+  padding: 0.75rem 1.25rem;
+  z-index: 200;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* ---------- typography ---------- */
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.12;
+}
+
+.serif-italic {
+  font-style: italic;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.prose {
+  color: var(--ink-soft);
+  margin: 0 0 1rem;
+  max-width: 62ch;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.85rem 1.75rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease), border-color 0.25s var(--ease),
+    transform 0.25s var(--ease);
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--primary {
+  background: var(--ink);
+  color: var(--white);
+}
+.btn--primary:hover {
+  background: #000;
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.btn--outline:hover {
+  border-color: var(--ink);
+  background: rgba(22, 19, 15, 0.04);
+}
+
+.btn--ghost {
+  background: rgba(255, 253, 250, 0.12);
+  border-color: rgba(255, 253, 250, 0.55);
+  color: var(--white);
+  backdrop-filter: blur(6px);
+}
+.btn--ghost:hover {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.linkbtn:hover {
+  color: var(--ink);
+}
+.linkbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.linkbtn--strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.linkbtn--right {
+  margin-left: auto;
+  display: flex;
+}
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.iconbtn:hover:not(:disabled) {
+  background: rgba(22, 19, 15, 0.06);
+  border-color: var(--line-strong);
+}
+.iconbtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Header — transparent over the hero, solid once scrolled
+   ============================================================ */
+
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+  border-bottom: 1px solid transparent;
+}
+
+.header__inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 1.1rem var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.brand__mark {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  opacity: 0.65;
+}
+
+.header__nav {
+  display: flex;
+  gap: 2rem;
+  margin-inline: auto;
+}
+.header__nav a {
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  position: relative;
+  padding-block: 0.25rem;
+}
+.header__nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s var(--ease);
+}
+.header__nav a:hover::after {
+  width: 100%;
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header__cta {
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 0.6rem 1.35rem;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease);
+}
+
+/* over the hero */
+.header--float {
+  color: var(--white);
+}
+.header--float .header__cta:hover {
+  background: var(--white);
+  color: var(--ink);
+}
+
+/* scrolled / inner pages */
+.header--solid {
+  background: rgba(239, 235, 228, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom-color: var(--line);
+  color: var(--ink);
+}
+.header--solid .header__cta:hover {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.header__burger {
+  display: none;
+}
+
+/* mobile drawer */
+
+/* Keeps the bar clickable above the full-height drawer below it. */
+.header__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.drawer {
+  position: fixed;
+  /* Full height, not inset below the bar: an inset left a transparent strip
+     at the top that showed the scrolling page through it. The bar's own
+     background sits on top of this instead, so there is no seam. */
+  inset: 0;
+  background: var(--cream);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: calc(62px + 2rem) var(--gutter) 3rem;
+  /* Scroll the drawer itself, and stop the gesture chaining to the page
+     behind it — body overflow:hidden alone does not hold on iOS Safari. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: riseIn 0.35s var(--ease) both;
+}
+.drawer__nav {
+  display: grid;
+  gap: 0.5rem;
+}
+/* Section links are buttons, route links are anchors — they look identical. */
+.drawer__nav button,
+.drawer__nav a {
+  display: block;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 1rem 0;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  cursor: pointer;
+}
+.drawer__foot {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--white);
+  overflow: hidden;
+}
+
+.hero__stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* Both slides are stacked; only the active one is opaque, so the swap is a
+   crossfade rather than a cut. The slow zoom runs on the active slide only. */
+.hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 1.6s var(--ease);
+}
+.hero__img.is-active {
+  opacity: 1;
+  animation: heroZoom 9s var(--ease) forwards;
+}
+
+@keyframes heroZoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Two layers of shadow: a top-and-bottom gradient so the nav and the headline
+   always have something to sit on, and a vignette that pulls the eye inward. */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(118% 84% at 50% 45%, rgba(10, 8, 6, 0.2) 26%, rgba(10, 8, 6, 0.74) 100%),
+    linear-gradient(
+      180deg,
+      rgba(10, 8, 6, 0.74) 0%,
+      rgba(10, 8, 6, 0.36) 28%,
+      rgba(10, 8, 6, 0.44) 62%,
+      rgba(10, 8, 6, 0.84) 100%
+    );
+}
+
+.hero__dots {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 6.5rem;
+  display: flex;
+  gap: 1.5rem;
+}
+.hero__dots button {
+  background: none;
+  border: 0;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  color: rgba(255, 253, 250, 0.6);
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.3s var(--ease);
+}
+.hero__dots button::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 0;
+  background: currentColor;
+  transition: width 0.5s var(--ease);
+}
+.hero__dots button.is-active {
+  color: var(--white);
+}
+.hero__dots button.is-active::after {
+  width: 100%;
+}
+
+.hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 8rem var(--gutter) 6rem;
+  max-width: 62rem;
+  animation: riseIn 1.1s var(--ease) both 0.2s;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero__kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin: 0 0 1.5rem;
+  opacity: 0.85;
+}
+
+.hero__title {
+  font-size: clamp(2.9rem, 7vw, 5.4rem);
+  line-height: 1.04;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.28);
+  margin: 0;
+}
+
+.hero__sub {
+  margin: 1.5rem auto 2.5rem;
+  max-width: 34rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+
+.hero__scroll {
+  position: absolute;
+  bottom: 2.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: none;
+  border: 0;
+  color: var(--white);
+  cursor: pointer;
+  animation: bob 2.4s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 8px);
+  }
+}
+
+/* ============================================================
+   About — text column beside a square image
+   ============================================================ */
+
+.about {
+  background: var(--cream-soft);
+  padding: clamp(4.5rem, 9vw, 8rem) 0;
+}
+
+.about__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2.5rem, 6vw, 5.5rem);
+  align-items: center;
+}
+
+.about__title {
+  font-size: clamp(1.75rem, 3.1vw, 2.6rem);
+  margin-bottom: 1.75rem;
+}
+
+.about__body p {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin: 0 0 1.1rem;
+  max-width: 46ch;
+}
+
+.about__figure {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+.about__figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.9s var(--ease);
+}
+.about__figure:hover img {
+  transform: scale(1.04);
+}
+
+.about__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  margin-top: 2rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line);
+}
+.about__fact strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.about__fact span {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ============================================================
+   Statement band
+   ============================================================ */
+
+.statement {
+  background: var(--cream-soft);
+  padding: 0 0 clamp(4rem, 8vw, 7rem);
+}
+
+.statement__inner {
+  border-top: 1px solid var(--line);
+  padding-top: clamp(3rem, 6vw, 5rem);
+}
+
+.statement__head {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.statement__title {
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.statement__sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  margin: 0.6rem 0 0;
+}
+
+.statement__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+.statement__row p {
+  max-width: 44ch;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.statement__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ============================================================
+   Stats band — photo left, mocha panel right
+   ============================================================ */
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.stats__img {
+  min-height: 340px;
+}
+.stats__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stats__panel {
+  background: var(--mocha);
+  color: var(--white);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(2rem, 5vw, 4.5rem);
+  align-content: center;
+}
+
+.stats__value {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  line-height: 1;
+  display: block;
+}
+.stats__value sup {
+  font-size: 0.45em;
+  vertical-align: super;
+  margin-left: 0.15em;
+}
+.stats__label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 253, 250, 0.82);
+  max-width: 18ch;
+}
+
+/* ============================================================
+   Inside / outside detail columns
+   ============================================================ */
+
+.details {
+  background: var(--cream-soft);
+  padding: clamp(3.5rem, 7vw, 6rem) 0;
+}
+
+.details__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2.5rem, 7vw, 6rem);
+}
+
+.details__col h3 {
+  font-size: 1.35rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.details__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.35rem;
+}
+.details__list li {
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  max-width: 42ch;
+}
+.details__lead {
+  font-weight: 700;
+  color: var(--ink);
+  margin-right: 0.35rem;
+}
+
+/* ============================================================
+   Photo strip
+   ============================================================ */
+
+.strip {
+  background: var(--cream-soft);
+  padding: 0 0 clamp(4rem, 8vw, 7rem);
+}
+
+.strip__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.strip__pill {
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.8rem;
+  background: var(--cream);
+}
+
+.strip__arrows {
+  display: flex;
+  gap: 0.6rem;
+}
+.strip__arrows .iconbtn {
+  width: 42px;
+  height: 42px;
+}
+.strip__arrows .iconbtn:last-child {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+.strip__arrows .iconbtn:last-child:hover {
+  background: #000;
+}
+
+.strip__rail {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+.strip__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.strip__item {
+  flex: 0 0 clamp(200px, 24vw, 290px);
+  aspect-ratio: 3 / 4;
+  scroll-snap-align: start;
+  overflow: hidden;
+  border-radius: var(--radius);
+  padding: 0;
+  border: 0;
+  background: var(--sand);
+  cursor: pointer;
+}
+.strip__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s var(--ease);
+}
+.strip__item:hover img {
+  transform: scale(1.05);
+}
+
+/* ============================================================
+   Generic sections
+   ============================================================ */
+
+.section {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+  border-top: 1px solid var(--line);
+}
+.section:first-child {
+  border-top: 0;
+}
+.section > h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+  margin-bottom: 1.5rem;
+}
+.section__lede {
+  color: var(--muted);
+  margin: -0.75rem 0 1.75rem;
+  font-size: 0.88rem;
+}
+
+/* sleeping arrangements */
+.sleeping {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.sleeping li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  background: var(--cream-soft);
+}
+.sleeping strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+.sleeping span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* amenities */
+.amenities {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem 2rem;
+}
+.amenities li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.88rem;
+  padding-block: 0.35rem;
+}
+.amenities--muted li {
+  color: var(--muted);
+}
+.amenities--muted {
+  margin-top: 1.75rem;
+}
+
+/* ============================================================
+   Enquiry
+   ============================================================ */
+
+.enquire {
+  background: var(--mocha);
+  color: var(--white);
+  padding: clamp(4rem, 8vw, 7rem) 0;
+}
+.enquire__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2.5rem, 6vw, 5rem);
+  align-items: start;
+}
+.enquire .eyebrow {
+  color: rgba(255, 253, 250, 0.7);
+}
+.enquire__title {
+  font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+  margin: 0.6rem 0 1.5rem;
+}
+.enquire__intro .prose {
+  color: rgba(255, 253, 250, 0.82);
+}
+.enquire__contacts {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  font-size: 0.88rem;
+}
+.enquire__contacts li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 253, 250, 0.2);
+}
+.enquire__contacts a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.enquire__panel {
+  background: var(--cream-soft);
+  color: var(--ink);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+}
+.enquire__note {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.enquire__done {
+  text-align: center;
+  padding: 1rem 0;
+}
+.enquire__done h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+.enquire__done .prose {
+  margin-inline: auto;
+}
+.confirmed__mark {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.5rem;
+}
+
+/* ============================================================
+   Forms
+   ============================================================ */
+
+.formgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.formgrid label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.formgrid label.is-wide {
+  grid-column: 1 / -1;
+}
+/* Grid items default to min-width:auto, and iOS gives date/number inputs an
+   intrinsic width wider than their box — together those pushed the fields out
+   past the panel on a phone. min-width:0 lets width:100% actually win. */
+.formgrid label {
+  min-width: 0;
+}
+
+.formgrid input,
+.formgrid textarea {
+  font: inherit;
+  font-size: 1rem; /* under 1rem iOS Safari zooms the page on focus */
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  text-transform: none;
+  letter-spacing: normal;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Safari renders these as inline boxes that ignore the width above. */
+.formgrid input[type='date'],
+.formgrid input[type='number'] {
+  display: block;
+  min-height: 2.75rem;
+}
+
+/* ---------- validation ---------- */
+
+.formgrid label.has-error input,
+.formgrid label.has-error textarea {
+  border-color: var(--error);
+  background: var(--error-tint);
+}
+.formgrid label.has-error input:focus-visible,
+.formgrid label.has-error textarea:focus-visible {
+  outline-color: var(--error);
+}
+
+/* Reserves its own line so a message appearing cannot shove the grid down. */
+.field__error {
+  display: block;
+  min-height: 1.05rem;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--error);
+}
+
+.enquire__nights {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.formgrid textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+/* ============================================================
+   Location
+   ============================================================ */
+
+.mapframe {
+  position: relative;
+  aspect-ratio: 21 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--sand);
+}
+/* Absolute fill rather than a height on the iframe itself — Google's embed
+   sizes its tiles from the frame box, and a percentage height on a lazily
+   loaded iframe leaves it at its intrinsic 300×150. */
+.mapframe iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.mapframe__link {
+  margin: 1rem 0 2rem;
+}
+
+.nearby {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.25rem 2.5rem;
+}
+.nearby li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.nearby__name {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.nearby__detail {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.nearby__time {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Things to know
+   ============================================================ */
+
+.know {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
+}
+.know h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+.know ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.know__shield {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 1rem 0 0;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+/* No top margin — the enquiry band sits directly above it, and a margin there
+   showed as a stray strip of cream between the two dark sections. */
+.footer {
+  background: var(--ink);
+  color: rgba(255, 253, 250, 0.78);
+  padding: clamp(3.5rem, 7vw, 6rem) 0 2.5rem;
+}
+.footer__top {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: 3rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid rgba(255, 253, 250, 0.14);
+}
+.footer__brand {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  color: var(--white);
+  margin: 0 0 0.75rem;
+}
+.footer__tag {
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 30ch;
+}
+.footer__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
+}
+.footer h3 {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 1rem;
+}
+.footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+.footer a:hover {
+  color: var(--white);
+}
+.footer__bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 2rem;
+  font-size: 0.75rem;
+  color: rgba(255, 253, 250, 0.55);
+}
+.footer__bar p {
+  margin: 0;
+}
+
+/* ============================================================
+   Lightbox
+   ============================================================ */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(14, 12, 10, 0.96);
+  color: var(--white);
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  grid-template-rows: 64px 1fr;
+  align-items: center;
+}
+.lightbox__bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1.5rem;
+}
+.lightbox__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.lightbox__count {
+  font-size: 0.8rem;
+  color: rgba(255, 253, 250, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+.lightbox__nav {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 253, 250, 0.35);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.lightbox__nav:hover {
+  background: rgba(255, 253, 250, 0.14);
+}
+.lightbox__stage {
+  margin: 0;
+  padding: 0 1rem 2rem;
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  min-height: 0;
+  height: 100%;
+}
+.lightbox__stage img {
+  max-height: calc(100svh - 190px);
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.lightbox__stage figcaption {
+  font-size: 0.8rem;
+  color: rgba(255, 253, 250, 0.72);
+  text-align: center;
+}
+
+/* ============================================================
+   Gallery page
+   ============================================================ */
+
+/* The inline values matter: this element also carries .shell, and a `padding`
+   shorthand with 0 here would wipe out .shell's padding-inline and run the
+   gallery edge to edge. */
+.gallery {
+  padding: 7rem var(--gutter) 2rem;
+}
+.gallery__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+.gallery__title {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+}
+.gallery__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+.chip {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.chip:hover {
+  background: rgba(22, 19, 15, 0.05);
+}
+.chip.is-active {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+
+.gallery__grid {
+  columns: 3;
+  column-gap: 1rem;
+}
+.gallery__cell {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--sand);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  break-inside: avoid;
+  cursor: pointer;
+}
+.gallery__cell img {
+  width: 100%;
+  transition: transform 0.7s var(--ease), opacity 0.3s var(--ease);
+}
+.gallery__cell:hover img {
+  transform: scale(1.04);
+  opacity: 0.94;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 1080px) {
+  .gallery__grid {
+    columns: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .header__nav {
+    display: none;
+  }
+  /* The nav's margin-inline:auto was the only thing pushing this to the right
+     edge; once the nav is hidden the controls collapse against the brand and
+     the burger lands mid-bar. Take over the job here. */
+  .header__right {
+    margin-inline-start: auto;
+  }
+  .header__burger {
+    display: inline-flex;
+  }
+  .about__grid,
+  .stats,
+  .details__grid,
+  .enquire__grid,
+  .footer__top {
+    grid-template-columns: 1fr;
+  }
+  .about__figure {
+    order: -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .gallery {
+    padding-top: 5.5rem;
+  }
+  .gallery__grid {
+    columns: 1;
+  }
+  .gallery__head {
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .formgrid {
+    grid-template-columns: 1fr;
+  }
+  .lightbox {
+    grid-template-columns: 44px 1fr 44px;
+  }
+  .statement__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header__cta,
+  .header__lang {
+    display: none;
+  }
+
+  /* the drawer links were set at the desktop display size and dwarfed the screen */
+  .drawer__nav button,
+  .drawer__nav a {
+    font-size: 1.3rem;
+    padding: 0.8rem 0;
+  }
+
+  /* "Nothing to install" is the least useful of the three on a phone */
+  .tourband__meta li:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Interactive tour — the band on the landing page, and the
+   full-viewport frame at /tour
+   ============================================================ */
+
+.tourband {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--white);
+  padding: clamp(4.5rem, 10vw, 8rem) 0;
+  text-align: center;
+}
+
+.tourband__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Two stacked washes: an overall dim so the type holds, plus a vignette that
+   keeps the middle of the photo readable without flattening the corners. */
+.tourband::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(22, 19, 15, 0.82) 0%, rgba(22, 19, 15, 0.62) 45%, rgba(22, 19, 15, 0.88) 100%),
+    radial-gradient(110% 80% at 50% 50%, rgba(22, 19, 15, 0.1) 30%, rgba(22, 19, 15, 0.72) 100%);
+}
+
+.tourband__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tourband__eyebrow {
+  color: var(--sand-deep);
+  margin-bottom: 1.25rem;
+}
+
+.tourband__title {
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  line-height: 1.08;
+  max-width: 18ch;
+  margin: 0;
+}
+
+.tourband__body {
+  margin: 1.35rem 0 2.25rem;
+  max-width: 46ch;
+  font-size: 0.9rem;
+  color: rgba(255, 253, 250, 0.78);
+}
+
+.tourband__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.5rem;
+  list-style: none;
+  margin: 2.25rem 0 0;
+  padding: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 253, 250, 0.55);
+}
+.tourband__meta li + li {
+  position: relative;
+}
+.tourband__meta li + li::before {
+  content: '·';
+  position: absolute;
+  left: -0.85rem;
+}
+
+/* /tour — the frame owns the viewport. `100svh` so mobile browser chrome
+   can't push the tour's own bottom rail out of reach. */
+.tourpage {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+}
+.tourpage iframe {
+  display: block;
+  width: 100%;
+  height: 100svh;
+  border: 0;
+}

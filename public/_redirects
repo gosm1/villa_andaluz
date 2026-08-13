@@ -1,0 +1,5 @@
+# Netlify / Cloudflare Pages SPA fallback.
+# /photos and /tour are client-side routes with no file behind them, so a
+# refresh or a shared link would 404 without this. The tour is a real file and
+# is matched before this rule, so it is unaffected.
+/*    /index.html   200
