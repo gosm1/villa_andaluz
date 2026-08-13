@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Lightbox from '../components/Lightbox.jsx'
 import Icon from '../components/Icons.jsx'
-import { photos } from '../data/photos.js'
+import { photos, responsive } from '../data/photos.js'
 import { villa } from '../data/villa.js'
 
 export default function GalleryPage() {
@@ -55,7 +55,11 @@ export default function GalleryPage() {
             onClick={() => setLightboxIndex(visible.indexOf(photo))}
             aria-label={`Open photo: ${photo.alt}`}
           >
-            <img src={photo.src} alt={photo.alt} loading="lazy" />
+            <img
+              {...responsive(photo.src, '(max-width: 620px) 100vw, (max-width: 1080px) 50vw, 33vw')}
+              alt={photo.alt}
+              loading="lazy"
+            />
           </button>
         ))}
       </div>

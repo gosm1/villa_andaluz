@@ -1,4 +1,4 @@
-import { aboutPhoto } from '../data/photos.js'
+import { aboutPhoto, responsive } from '../data/photos.js'
 import { villa } from '../data/villa.js'
 
 const FACTS = [
@@ -44,7 +44,11 @@ export default function About() {
         </div>
 
         <figure className="about__figure">
-          <img src={aboutPhoto} alt="The private pool at the centre of the garden" loading="lazy" />
+          <img
+            {...responsive(aboutPhoto, '(max-width: 900px) 100vw, 45vw')}
+            alt="The private pool at the centre of the garden"
+            loading="lazy"
+          />
         </figure>
       </div>
     </section>

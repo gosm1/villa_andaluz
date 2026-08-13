@@ -9,11 +9,16 @@
   --cream-soft: #f5f2ec;
   --sand: #e4ddd1;
   --sand-deep: #d8cfc0;
-  --mocha: #8a7c6c;
+  /* Darkened from #8a7c6c: white body text on the old value measured 3.99:1,
+     below the 4.5:1 AA floor. This clears it at 6.11:1, and the muted 82%
+     white in the same band clears it at 4.76:1. */
+  --mocha: #6b5f52;
   --mocha-deep: #6f6354;
   --ink: #16130f;
   --ink-soft: #3a352d;
-  --muted: #7c7368;
+  /* Was #7c7368 at 3.92:1 on the cream page, which fails AA for small text.
+     This measures 5.12:1 on cream and 4.51:1 on the sand panels. */
+  --muted: #696158;
   --line: rgba(22, 19, 15, 0.13);
   --line-strong: rgba(22, 19, 15, 0.24);
   --white: #fffdfa;
@@ -76,6 +81,12 @@ body {
 img {
   display: block;
   max-width: 100%;
+  /* Images now carry width/height attributes so the browser can reserve their
+     box before the bytes land. Those attributes are presentational hints, so
+     without this the height would stay pinned at the pixel value and squash
+     the picture. `auto` keeps the intrinsic ratio; rules that set an explicit
+     height (the cover-fitted figures) are more specific and still win. */
+  height: auto;
 }
 
 button {
@@ -961,14 +972,15 @@ h3 {
   align-items: start;
 }
 .enquire .eyebrow {
-  color: rgba(255, 253, 250, 0.7);
+  /* 0.7 measured 3.97:1 on the band; 0.82 clears AA at 4.76:1. */
+  color: rgba(255, 253, 250, 0.82);
 }
 .enquire__title {
   font-size: clamp(1.7rem, 3.2vw, 2.6rem);
   margin: 0.6rem 0 1.5rem;
 }
 .enquire__intro .prose {
-  color: rgba(255, 253, 250, 0.82);
+  color: rgba(255, 253, 250, 0.88);
 }
 .enquire__contacts {
   list-style: none;
@@ -1101,6 +1113,12 @@ h3 {
   color: var(--error);
 }
 
+/* Holds the viewport height while a lazy route's chunk loads, so the footer
+   does not jump up and back down. */
+.routeloading {
+  min-height: 100svh;
+}
+
 .enquire__nights {
   margin: 0 0 1rem;
   text-align: center;
@@ -1141,6 +1159,42 @@ h3 {
   height: 100%;
   border: 0;
 }
+/* Stands in for the embed until it is scrolled to. Fills the same box, so
+   swapping in the iframe shifts nothing. */
+.mapframe__placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-soft);
+  background: repeating-linear-gradient(
+      45deg,
+      transparent 0 14px,
+      rgba(22, 19, 15, 0.025) 14px 28px
+    ),
+    var(--sand);
+  transition: background-color 0.25s var(--ease);
+}
+.mapframe__placeholder:hover {
+  background-color: var(--sand-deep);
+}
+.mapframe__place {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+.mapframe__hint {
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .mapframe__link {
   margin: 1rem 0 2rem;
 }

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icons.jsx'
-import { tourPhoto } from '../data/photos.js'
+import { tourPhoto, responsive } from '../data/photos.js'
 import { villa } from '../data/villa.js'
 
 export default function TourBand() {
@@ -8,7 +8,13 @@ export default function TourBand() {
 
   return (
     <section className="tourband" id="tour" aria-labelledby="tour-heading">
-      <img className="tourband__bg" src={tourPhoto} alt="" aria-hidden="true" loading="lazy" />
+      <img
+        className="tourband__bg"
+        {...responsive(tourPhoto, '100vw')}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+      />
 
       <div className="shell tourband__inner">
         <p className="eyebrow tourband__eyebrow">{villa.tour.eyebrow}</p>

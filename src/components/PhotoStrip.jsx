@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from './Icons.jsx'
-import { stripPhotos, photos } from '../data/photos.js'
+import { stripPhotos, photos, responsive } from '../data/photos.js'
 
 export default function PhotoStrip({ onOpen }) {
   const railRef = useRef(null)
@@ -41,7 +41,11 @@ export default function PhotoStrip({ onOpen }) {
                 onClick={() => onOpen(photos.indexOf(meta))}
                 aria-label={`Open photo: ${meta?.alt ?? 'villa'}`}
               >
-                <img src={src} alt={meta?.alt ?? ''} loading="lazy" />
+                <img
+                  {...responsive(src, '(max-width: 620px) 78vw, 30vw')}
+                  alt={meta?.alt ?? ''}
+                  loading="lazy"
+                />
               </button>
             )
           })}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icons.jsx'
-import { heroSlides } from '../data/photos.js'
+import { heroSlides, responsive } from '../data/photos.js'
 import { villa } from '../data/villa.js'
 import { scrollToHash } from '../lib/smoothScroll.js'
 
@@ -26,9 +26,14 @@ export default function Hero() {
           <img
             key={slide.src}
             className={`hero__img ${i === active ? 'is-active' : ''}`}
-            src={slide.src}
+            // Full-bleed, so it is always the viewport width.
+            {...responsive(slide.src, '100vw')}
             alt=""
             fetchpriority={i === 0 ? 'high' : 'low'}
+            // The night slide is not shown for 7s; letting it compete with the
+            // LCP image for bandwidth delayed the first paint for nothing.
+            loading={i === 0 ? 'eager' : 'lazy'}
+            decoding={i === 0 ? 'sync' : 'async'}
           />
         ))}
       </div>

@@ -52,6 +52,61 @@ export const photos = [
   { src: bath2Alt, room: 'Bathrooms', alt: 'En-suite shower' },
 ]
 
+/* ------------------------------------------------------------------
+   Responsive variants
+   ------------------------------------------------------------------ */
+
+import { imageSizes } from './imageSizes.js'
+
+// Picks up every `name-480w.avif` / `name-800w.avif` beside the originals, so
+// adding a width is a matter of dropping the file in and rebuilding.
+const files = import.meta.glob('../../assets/*.avif', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+/** stem -> { full, widths: [[w, url], ...] } */
+const sets = {}
+for (const [path, url] of Object.entries(files)) {
+  const name = path.split('/').pop().replace(/\.avif$/, '')
+  const variant = name.match(/^(.+)-(\d+)w$/)
+  const stem = variant ? variant[1] : name
+  const entry = (sets[stem] ||= { full: null, widths: [] })
+  if (variant) entry.widths.push([Number(variant[2]), url])
+  else entry.full = url
+}
+
+// Reverse lookup: components hold the imported (hashed) URL, not the stem.
+const byUrl = new Map()
+for (const [stem, entry] of Object.entries(sets)) {
+  if (entry.full) byUrl.set(entry.full, { ...entry, stem })
+}
+
+/**
+ * Everything an <img> needs for one photo: `src`, `srcSet`, and intrinsic
+ * `width`/`height` so the box is reserved before the bytes arrive.
+ *
+ * `sizes` must be supplied by the caller — only the layout knows how wide the
+ * image will actually be, and getting it wrong makes the browser pick badly.
+ */
+export function responsive(src, sizes) {
+  const entry = byUrl.get(src)
+  const intrinsic = entry && imageSizes[entry.stem]
+  if (!entry || !intrinsic) return { src }
+
+  const [width, height] = intrinsic
+  if (!entry.widths.length) return { src, width, height }
+
+  // The original is the widest entry; without it here, a large viewport would
+  // be served the biggest *variant* rather than the full-resolution file.
+  const candidates = [...entry.widths, [width, entry.full]]
+    .sort((a, b) => a[0] - b[0])
+    .map(([w, url]) => `${url} ${w}w`)
+
+  return { src, srcSet: candidates.join(', '), sizes, width, height }
+}
+
 /** Full-bleed hero image. */
 export const heroPhoto = exteriorDay
 

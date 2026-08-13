@@ -1,11 +1,15 @@
-import { statsPhoto } from '../data/photos.js'
+import { statsPhoto, responsive } from '../data/photos.js'
 import { villa } from '../data/villa.js'
 
 export default function Stats() {
   return (
     <section className="stats" aria-label="The villa in numbers">
       <div className="stats__img">
-        <img src={statsPhoto} alt="Lounge with sofa bed and garden view" loading="lazy" />
+        <img
+          {...responsive(statsPhoto, '(max-width: 900px) 100vw, 40vw')}
+          alt="Lounge with sofa bed and garden view"
+          loading="lazy"
+        />
       </div>
       <div className="stats__panel">
         {villa.stats.map((stat) => (

@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
 import Home from './pages/Home.jsx'
-import GalleryPage from './pages/GalleryPage.jsx'
-import TourPage from './pages/TourPage.jsx'
+
+// Split out of the landing bundle: most visitors never open either, and the
+// JS for both was being parsed before the hero could paint.
+const GalleryPage = lazy(() => import('./pages/GalleryPage.jsx'))
+const TourPage = lazy(() => import('./pages/TourPage.jsx'))
 import { startSmoothScroll, stopSmoothScroll, scrollToTarget, scrollToHash } from './lib/smoothScroll.js'
 
 function ScrollToTop() {
@@ -46,12 +49,16 @@ export default function App() {
       <ScrollToTop />
       {!bare && <Header />}
       <main id="main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/photos" element={<GalleryPage />} />
-          <Route path="/tour" element={<TourPage />} />
-          <Route path="*" element={<Home />} />
-        </Routes>
+        {/* Home is bundled, so it never suspends; the fallback only ever shows
+            while a lazy route's chunk is in flight. */}
+        <Suspense fallback={<div className="routeloading" aria-busy="true" />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/photos" element={<GalleryPage />} />
+            <Route path="/tour" element={<TourPage />} />
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </Suspense>
       </main>
       {!bare && <Footer />}
     </>
