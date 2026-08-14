@@ -378,6 +378,18 @@ h3 {
   border-bottom-color: var(--line);
   color: var(--ink);
 }
+
+/* A backdrop-filter makes its element a containing block for fixed-position
+   descendants. The drawer lives inside <header>, so with the blur active its
+   `inset: 0` resolved against the ~62px bar instead of the viewport and the
+   cream panel collapsed to the height of the bar. The blur has nothing to do
+   while the drawer is open anyway — the panel behind the bar is opaque. */
+.header.is-menu-open {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: transparent;
+  border-bottom-color: transparent;
+}
 .header--solid .header__cta:hover {
   background: var(--ink);
   color: var(--white);

@@ -67,7 +67,11 @@ export default function Header() {
   }
 
   return (
-    <header className={`header ${overHero ? 'header--float' : 'header--solid'}`}>
+    <header
+      className={`header ${overHero ? 'header--float' : 'header--solid'}${
+        menuOpen ? ' is-menu-open' : ''
+      }`}
+    >
       <a className="skip-link" href="#main">Skip to content</a>
       <div className="header__inner">
         <Link to="/" className="brand">
