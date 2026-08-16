@@ -364,9 +364,22 @@ const NODES = {
 const RAIL=["arrival","passage","pool","terrace","kitchen","|","lounge","garden","hearth","hidden"];
 const START="arrival", NIGHT_HOME="pool";
 
+/* ---- photo set -------------------------------------------------------
+   "v2-avif"  re-rendered stills, AVIF encoded   <- current
+   "v2-webp"  the same stills, WebP encoded
+   ""         the original photographs in images/
+   Every set is complete and every set shares one marker table, so this is a
+   one-word revert. Only add a set whose framing matches: the at:[x,y] values
+   in NODES are image-space, and a reframed photo silently moves every door. */
+const SET="v2-avif";
+const EXT=SET.indexOf("avif")>-1?"avif":"webp";
 /* phones get the 1000px set: half the bytes, a quarter of the GPU memory */
 const SMALL=matchMedia("(max-width:820px)").matches;
-const BASE=SMALL?"images/mobile/":"images/";
+const DIR=SET?"images/"+SET+"/":"images/";
+const BASE=SMALL?DIR+"mobile/":DIR;
+/* Safari before 16.4 cannot decode AVIF. Those clients retry against the
+   original WebP rather than losing the room to a blank texture. */
+const FALLBACK=SMALL?"images/mobile/":"images/";
 
 /* ---------------- shaders ---------------- */
 const VERT=`attribute vec2 aPos;varying vec2 vUv;
@@ -416,10 +429,15 @@ let night=false,cur=START;
 let fromVar=null,toVar=null,transT=1,transDur=1080,transStart=0,transPivot=[.5,.5],transKind="walk";
 let historyStack=[],mouse=[0,0],target=[0,0],dragging=false,dragLast=null,dragOffset=[0,0],started=0;
 
-const SRC={};
+const SRC={},ALT={};
 Object.keys(NODES).forEach(k=>{
-  if(NODES[k].day)   SRC[k+":day"]=BASE+NODES[k].day;
-  if(NODES[k].night) SRC[k+":night"]=BASE+NODES[k].night;
+  /* NODES still names the files .webp; the active set decides the extension. */
+  const put=(key,file)=>{
+    SRC[key]=BASE+file.replace(/\.webp$/,"."+EXT);
+    ALT[key]=FALLBACK+file;
+  };
+  if(NODES[k].day)   put(k+":day",NODES[k].day);
+  if(NODES[k].night) put(k+":night",NODES[k].night);
 });
 
 /* ---------------- progressive loading ---------------- */
@@ -429,7 +447,13 @@ function load(ik){
   pendingLoads[ik]=new Promise(res=>{
     const im=new Image();
     im.onload=()=>{ imgs[ik]=im; if(gl&&prog) texes[ik]=makeTex(im); res(im); };
-    im.onerror=()=>res(null);
+    im.onerror=()=>{
+      /* One retry against the original set. Covers a browser that cannot decode
+         the active format, and any gap in a swapped-in photo set. The src check
+         stops it looping when the fallback fails too. */
+      if(ALT[ik]&&ALT[ik]!==SRC[ik]&&im.src.indexOf(ALT[ik])===-1){ im.src=ALT[ik]; return; }
+      res(null);
+    };
     im.src=SRC[ik];
   });
   return pendingLoads[ik];
