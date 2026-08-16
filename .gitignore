@@ -2,3 +2,7 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# Unrelated working files that live in this folder, not part of the site.
+airbnb_*.csv
+prospection-*.html
