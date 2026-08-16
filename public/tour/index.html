@@ -269,6 +269,11 @@ body:not(.night) .rail button[data-nightonly]{display:none}
    mAnchor is the horizontal centre of the portrait crop, picked so
    every marker in that room stays inside the visible band.
    ================================================================ */
+/* pool and hidden use re-rendered stills whose framing differs from the
+   original photographs, so their DAY markers were re-derived against the new
+   images. Their NIGHT photos were not re-rendered, so nightSpots are untouched.
+   These six were read off a measured grid, not clicked in the browser: press C
+   and click each door to confirm, then paste the exact value back here. */
 const NODES = {
   arrival:{ day:"arrival.webp", kind:"Outside", name:"The front garden",
     note:"You arrive here. Roses, clipped lawn, and two ways in: the arch on the left, or up to the terrace.",
@@ -290,10 +295,10 @@ const NODES = {
     depth:"open", focal:[.42,.55], strength:.052, mAnchor:[.558,.5],
     nightFocal:[.40,.50], nightStrength:.055, mAnchorN:[.335,.5],
     spots:[
-      {to:"lounge",  at:[.418,.488], label:"Main lounge",    sub:"Under the pergola", lane:-34},
-      {to:"garden",  at:[.480,.488], label:"Garden room",    sub:"Glazed doors",      lane: 34},
-      {to:"passage", at:[.586,.484], label:"Side passage",   sub:"Through the arch",  lane:-34},
-      {to:"kitchen", at:[.698,.470], label:"Summer kitchen", sub:"Under the arches",  lane: 34, flip:true}
+      {to:"lounge",  at:[.385,.468], label:"Main lounge",    sub:"Under the pergola", lane:-34},
+      {to:"garden",  at:[.443,.468], label:"Garden room",    sub:"Glazed doors",      lane: 34},
+      {to:"passage", at:[.600,.455], label:"Side passage",   sub:"Through the arch",  lane:-34},
+      {to:"kitchen", at:[.690,.450], label:"Summer kitchen", sub:"Under the arches",  lane: 34, flip:true}
     ],
     nightSpots:[
       {to:"lounge",  at:[.284,.506], label:"Main lounge", sub:"Lit doors",             lane:-34},
@@ -353,8 +358,8 @@ const NODES = {
     depth:"room", focal:[.35,.60], strength:.055, mAnchor:[.575,.5],
     nightFocal:[.40,.62], nightStrength:.052, mAnchorN:[.462,.5],
     spots:[
-      {to:"passage", at:[.350,.612], label:"Side courtyard", sub:"Sliding doors"},
-      {to:"lounge",  at:[.800,.474], label:"Main lounge",    sub:"Up the steps", flip:true}
+      {to:"passage", at:[.340,.575], label:"Side courtyard", sub:"Sliding doors"},
+      {to:"lounge",  at:[.762,.512], label:"Main lounge",    sub:"Up the steps", flip:true}
     ],
     nightSpots:[
       {to:"terrace", at:[.167,.656], label:"The pergola",  sub:"Out through the glass"},
